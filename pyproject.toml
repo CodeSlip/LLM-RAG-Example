@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "sechallenge"
+version = "0.1.0"
+description = ""
+authors = ["Alex Schmelkin <85891+apumapho@users.noreply.github.com>"]
+readme = "README.md"
+packages = [{include = "sechallenge", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.109.1"
+python-dotenv = "^1.0.0"
+uvicorn = "^0.22.0"
+langchain = "^0.0.329"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+httpx = "^0.24.1"
+
+[tool.poetry.scripts]
+sechallenge = 'sechallenge.api:main'
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
