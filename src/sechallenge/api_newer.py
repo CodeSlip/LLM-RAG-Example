@@ -1,6 +1,8 @@
 import logging
 logging.basicConfig(level=logging.ERROR)
+logging.error('This will get logged')
 import os
+import fitz
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -13,19 +15,14 @@ from typing import Annotated
 from fastapi import FastAPI, Query
 from fastapi.staticfiles import StaticFiles
 
-from langchain.text_splitter import CharacterTextSplitter
-from langchain_community.vectorstores import Qdrant
 from qdrant_client import QdrantClient
-from langchain_openai import OpenAIEmbeddings
-
+from qdrant_client.models import VectorParams, Distance
 from sentence_transformers import SentenceTransformer
-from langchain.chains import RetrievalQA
+from langchain.text_splitter import CharacterTextSplitter
+from langchain_community.document_loaders import TextLoader
+from langchain_community.vectorstores import Qdrant
+from langchain_openai import OpenAIEmbeddings
 from langchain_community.document_loaders import PyPDFLoader
-from openai import OpenAI
-
-from langchain_core.vectorstores import VectorStoreRetriever
-
-llm = OpenAI()
 
 model = SentenceTransformer("all-MiniLM-L6-v2")
 embeddings = OpenAIEmbeddings()
@@ -34,39 +31,58 @@ client = QdrantClient("localhost", port=6333)
 qdrant = Qdrant(client, 
                 collection_name, 
                 embeddings)
+
+url = "localhost:6333"
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# @app.get("/processPDF")
+# def main():
+#     print("Starting the process...")
+#     pdf_data = ()
+   
+#     #Step 1: load PDF into array of documents
+#     try:
+#         pdf_data = load_pdf()
+#         print("pdf loaded")
+#     except:
+#         print("error step 1: load pdf")
+    
+#     #Step 2: load data into qdrant 
+#     try:
+#         load_qdrant(pdf_data)
+#         print("data loaded into qdrant")
+#     except Exception as e:
+#         logging.error("Exception occurred", exc_info=True)
+#         print("error step 2: load data into qdrant")
+
 @app.get("/query_resume")
 async def query_qdrant(question: str = Query(..., description="A question about Ernest's resume")):
-    docs = ()
+    
+    pdf_data = ()
     answer = ()
-    vectorstore = ()
-    retrievalQA = ()
-
    
     #Step 1: load PDF into array of documents
     try:
-        docs = load_pdf()
+        pdf_data = load_pdf()
         # pdf_data = minimal_load_pdf()
     except:
         print("error step 1: load pdf")
     
     #Step 2: load data into qdrant 
     try:
-        answer = load_qdrant(docs, question)
+        load_qdrant(pdf_data)
         print("data loaded into qdrant")
-        print("---", answer)
     except Exception as e:
         logging.error("Exception occurred", exc_info=True)
         print("error step 2: load data into qdrant")
 
-    # #Step 3. ask question
-    # try:
-    #     answer = get_answer(question, pdf_data)
-    # except Exception as e:
-    #     logging.error("Exception occurred", exc_info=True)
-    #     print("error step 3: ask question")
+    #Step 3. ask question
+    try:
+        answer = get_answer(question, pdf_data)
+    except Exception as e:
+        logging.error("Exception occurred", exc_info=True)
+        print("error step 3: ask question")
 
     print("response:", answer)
     return "success"
@@ -83,33 +99,43 @@ def load_pdf():
             if 'page_content' in doc and not isinstance(doc['page_content'], str):
                 print("page_content in the correct location")
                 doc['page_content'] = str(doc['page_content'])
+
     return docs
 
-def load_qdrant(docs, question):
+def load_qdrant(docs):
+    qdrant_load = qdrant.from_documents(
+        docs,
+        embeddings,
+        url=url,
+        collection_name= collection_name,
+        content_payload_key= collection_name,
+        metadata_payload_key= collection_name
+    )
+    print("qdrant loaded: ", qdrant_load)
 
-    vectorstore = qdrant.from_documents(
-        documents= docs,
-        embedding= embeddings
+def get_answer(question, docs):
+    print("----page_content----", docs)
+    print("----question----", question)
+
+    qdrant_get = qdrant.from_documents(
+        docs,
+        embeddings,
+        url=url,
+        collection_name= collection_name,
+        content_payload_key= collection_name,
+        metadata_payload_key= collection_name
     )
     
-    retriever = vectorstore.as_retriever()
-    answer = retriever.get_relevant_documents(question)
+    print("Question:", question)
+    print("qdrant-setup", qdrant_get)
+    retriever = qdrant_get.as_retriever(
+        search_type="mmr",
+        search_kwargs = {"k":2}
+    )
+    retriever.get_relevant_documents(question)
     
-    return answer
-
-# def get_answer(rag, question, retrievalQA, vectorstore):
-    
-#     rag = retrievalQA.from_chain_type (
-#         llm,
-#         retriever= vectorstore.as_retriever(),
-#         chain_type_kwargs={"prompt": question}
-#     )
-#     print("----question----", question)
-
-#     answer = rag.run(question)
-    
-#     print("response: ----", answer)
-#     return "success so far!"
+    print("response: ----", retriever)
+    return "success so far!"
 
     # answer = qdrant_get.similarity_search(question)
     # print(answer[0].page_content)
