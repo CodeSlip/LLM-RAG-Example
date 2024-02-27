@@ -24,6 +24,7 @@ from langchain_community.document_loaders import WebBaseLoader
 from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
 from langchain_community.vectorstores import Qdrant
 
+from langchain.llms import OpenAI
 
 model = SentenceTransformer("all-MiniLM-L6-v2")
 logger = logging.getLogger(__name__)
@@ -181,8 +182,8 @@ def store_data_in_qdrant(vectorEmbeddings, documents):
     )
     return uploadStatus
 
-# @app.get("/question-answer")
-# async def query_similar_documents(question: str = Query(..., description="The natural language question")):
+@app.get("/question-answer")
+async def query_similar_documents(question: str = Query(..., description="The natural language question")):
     # Generate an embedding for the question
     custom_prompt_template = PromptTemplate(
         template= question, input_variables=["context", "question"]
