@@ -1,17 +1,30 @@
 import logging
 import fitz #
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+if os.getenv("OPENAI_API_KEY") is not None:
+    print("OPENAI_API_KEY is ready")
+else:
+    print("OPENAI_API_KEY is failing")
 
 from typing import Annotated
-from dotenv import load_dotenv
-
 from fastapi import FastAPI, Query
 from fastapi.staticfiles import StaticFiles
 
-from qdrant_client import QdrantClient, models
-from qdrant_client.http.models import Distance, VectorParams
 from sentence_transformers import SentenceTransformer
 
-load_dotenv()
+from qdrant_client import QdrantClient
+from qdrant_client.http.models import Distance, VectorParams
+
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.llms import HuggingFaceHub
+from langchain_community.document_loaders import WebBaseLoader
+from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
+from langchain_community.vectorstores import Qdrant
+
+
 model = SentenceTransformer("all-MiniLM-L6-v2")
 logger = logging.getLogger(__name__)
 client = QdrantClient("localhost", port=6333)
@@ -28,14 +41,6 @@ def welcome():
 @app.get("/hello")
 def hello(name: Annotated[str, Query()] = "Wilson"):
     return {"message": f"Hello {name}!"}
-
-#@app.get("/analyze-pdf")
-#def main()
-    #pdf_to_string
-    #vectorize_text
-    #store_vector
-
-#@app.get("/retrieve-text")
 
 @app.get("/processPDF")
 def main():
@@ -59,6 +64,13 @@ def main():
     except:
         print("organize_data_into_documents error")
 
+    # #attempt to chunk the data
+    # try:
+    #     documents = organize_data_into_chunks(documents)
+    #     print("organized data into chunks")
+    # except:
+    #     print("organize_data_into_chunks error")
+    
     #attempt to generate vector embeddings from text
     try:
         vectorEmbeddings = create_vector_embeddings(documents)
@@ -137,20 +149,28 @@ def organize_data_into_documents(pages_data):
             "page_title": page_title,
             "page_text": page_text
         })
-        
+    
     return documents
 
-def create_vector_embeddings(documents):
-    for document in documents:
-        print (document["page_title"])
-        print (document["page_text"])
+# def organize_data_into_chunks(documents):
+#     print("Create chunks")
+#     for document in documents:
+#         l= document["page_text"].split('.')
+#         res= {}
+#         for i in range(len(l)//20+1):
+#             res[i]=l[i:i+20]
+#         print("chunked: ",res)
 
+def create_vector_embeddings(documents):
+    print("starting embedding:", documents)
+    vectors = []
     vectors = model.encode(
         [document["page_title"] + ". " + document["page_text"] for document in documents]
     )
+    print("vectors:", vectors)
     return vectors
 
-def store_data_in_qdrant(vectorEmbeddings, documents):
+def store_data_in_qdrant(vectorEmbeddings, documents): 
     #beginning storing process
     uploadStatus = client.upload_collection(
         collection_name= collection_name,
@@ -159,6 +179,23 @@ def store_data_in_qdrant(vectorEmbeddings, documents):
         ids=None,  # Vector ids will be assigned automatically
         batch_size=512,  # How many vectors will be uploaded in a single request?
     )
-    
     return uploadStatus
 
+# @app.get("/question-answer")
+# async def query_similar_documents(question: str = Query(..., description="The natural language question")):
+    # Generate an embedding for the question
+    custom_prompt_template = PromptTemplate(
+        template= question, input_variables=["context", "question"]
+    )
+    print("test!")
+    custom_qa = VectorDBQA.from_chain_type(
+        llm=llm, 
+        chain_type="stuff", 
+        vectorstore=qdrant_store,
+        return_source_documents=False,
+        chain_type_kwargs={"prompt": custom_prompt_template},
+    )
+
+    print("test 2!", custom_qa)
+    
+    return {"question": question, "answer": custom_qa}
