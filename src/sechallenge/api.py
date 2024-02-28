@@ -44,15 +44,13 @@ async def query_qdrant(question: str = Query(..., description="A question about 
     #Step 1: load PDF into array of documents
     try:
         docs = load_pdf()
-        # pdf_data = minimal_load_pdf()
-    except:
+    except Exception as e:
+        logging.error("Exception occurred", exc_info=True)
         print("error step 1: load pdf")
     
     #Step 2: answer question
     try:
         answer = answer_question(docs, question)
-        print("data loaded into qdrant")
-        print("---", answer)
     except Exception as e:
         logging.error("Exception occurred", exc_info=True)
         print("error step 2: load data into qdrant")
