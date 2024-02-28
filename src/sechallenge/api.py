@@ -19,11 +19,10 @@ from qdrant_client import QdrantClient
 from langchain_openai import OpenAIEmbeddings
 
 from sentence_transformers import SentenceTransformer
-from langchain.chains import RetrievalQA
 from langchain_community.document_loaders import PyPDFLoader
-from openai import OpenAI
+from langchain_openai import OpenAI
+from langchain.chains import RetrievalQA
 
-from langchain_core.vectorstores import VectorStoreRetriever
 
 llm = OpenAI()
 
@@ -41,9 +40,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 async def query_qdrant(question: str = Query(..., description="A question about Ernest's resume")):
     docs = ()
     answer = ()
-    vectorstore = ()
-    retrievalQA = ()
-
    
     #Step 1: load PDF into array of documents
     try:
@@ -52,24 +48,16 @@ async def query_qdrant(question: str = Query(..., description="A question about 
     except:
         print("error step 1: load pdf")
     
-    #Step 2: load data into qdrant 
+    #Step 2: answer question
     try:
-        answer = load_qdrant(docs, question)
+        answer = answer_question(docs, question)
         print("data loaded into qdrant")
         print("---", answer)
     except Exception as e:
         logging.error("Exception occurred", exc_info=True)
         print("error step 2: load data into qdrant")
 
-    # #Step 3. ask question
-    # try:
-    #     answer = get_answer(question, pdf_data)
-    # except Exception as e:
-    #     logging.error("Exception occurred", exc_info=True)
-    #     print("error step 3: ask question")
-
-    print("response:", answer)
-    return "success"
+    return answer
 
 def load_pdf():
     # Open the PDF file
@@ -85,55 +73,37 @@ def load_pdf():
                 doc['page_content'] = str(doc['page_content'])
     return docs
 
-def load_qdrant(docs, question):
+def answer_question(docs, question):
 
+    # Define qdrant
     vectorstore = qdrant.from_documents(
         documents= docs,
         embedding= embeddings
     )
     
-    retriever = vectorstore.as_retriever()
-    answer = retriever.get_relevant_documents(question)
-    
+    # # Standard search without llm
+    # search = vectorstore.similarity_search(question)
+    # return search
+
+    # Define retriever
+    retriever = vectorstore.as_retriever(
+        search_type="mmr",
+        search_kwargs = {"k":2}
+    )
+
+    # Define prompt structure
+    prompt = f"""
+    <|system|>
+    You are an AI assistant that receives questions about resumes, and responds with answers from your knowledge base.
+    </s>
+    <|user|>
+    {question}
+    </s>
+    <|assistant|>
+    """
+
+    # Get response from llm
+    response = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=retriever)
+    answer = response.invoke(prompt)["result"]
+
     return answer
-
-# def get_answer(rag, question, retrievalQA, vectorstore):
-    
-#     rag = retrievalQA.from_chain_type (
-#         llm,
-#         retriever= vectorstore.as_retriever(),
-#         chain_type_kwargs={"prompt": question}
-#     )
-#     print("----question----", question)
-
-#     answer = rag.run(question)
-    
-#     print("response: ----", answer)
-#     return "success so far!"
-
-    # answer = qdrant_get.similarity_search(question)
-    # print(answer[0].page_content)
-  
-    # return answer 
-    # Use `vector` for search for closest vectors in the collection
-    # search_result = qdrant.qdrant_client.search(
-    #     collection_name= collection_name,
-    #     query_vector=vector,
-    #     query_filter=None,  # If you don't want any filters for now
-    #     limit=5,  # 5 the most closest results is enough
-    # )
-    # # Convert text query into vector
-    # vector = qdrant.encode(question).tolist()
-
-    # # Use `vector` for search for closest vectors in the collection
-    # search_result = qdrant.qdrant_client.search(
-    #     collection_name= collection_name,
-    #     query_vector=vector,
-    #     query_filter=None,  # If you don't want any filters for now
-    #     limit=5,  # 5 the most closest results is enough
-    # )
-    
-    # payloads = [hit.payload for hit in search_result]
-    # print("payloads:",payloads)
-    # return payloads
-    
