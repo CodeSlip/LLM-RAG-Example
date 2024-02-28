@@ -80,10 +80,6 @@ def answer_question(docs, question):
         documents= docs,
         embedding= embeddings
     )
-    
-    # # Standard search without llm
-    # search = vectorstore.similarity_search(question)
-    # return search
 
     # Define retriever
     retriever = vectorstore.as_retriever(
