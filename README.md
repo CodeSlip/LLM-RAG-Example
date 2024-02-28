@@ -1,9 +1,9 @@
 
 # You Don't Know Hemmingway
 
-![Alt text](./You%20don't%20know%20Hemmingway.jpg)
+Welcome to "You Don't Know Hemmingway," an innovative application designed to delve deep into the life of one of the most enigmatic literary figures, Ernest Hemingway. This project is more than just a resume analyzer; it's an interactive experience that invites you to ask questions and explore the fascinating career of Hemingway in a way that's engaging, informative, and, above all, fun.
 
-Welcome to "You Don't Know Hemmingway," an innovative application designed to delve deep into the professional life of one of the most enigmatic literary figures, Ernest Hemingway. This project is more than just a resume analyzer; it's an interactive experience that invites you to ask questions and explore the fascinating career of Hemingway in a way that's engaging, informative, and, above all, fun.
+![Alt text](./You%20don't%20know%20Hemmingway.jpg)
 
 ## About the Project
 
