@@ -1,71 +1,57 @@
-# Sixfold Sales Engineer Coding Challenge
 
-Our coding challange for sales engineering is a self-directed project. Your task is to implement a simple web service that answers a natural language question based on the contents of a document.
+# You Don't Know Hemmingway
 
-Somebody who can make the right level of impact quickly in this job ought to be able to turn in a solution that works, if not production ready, in 2-3 hours.
+Welcome to "You Don't Know Hemmingway," an innovative application designed to delve deep into the life of one of the most enigmatic literary figures, Ernest Hemingway. This project is more than just a resume analyzer; it's an interactive experience that invites you to ask questions and explore the fascinating career of Hemingway in a way that's engaging, informative, and, above all, fun.
 
-## Project environment
+![Alt text](./You%20don't%20know%20Hemmingway.jpg)
 
-Your project must be written in [Python](https://www.python.org/) version 3. Its dependencies must be managed with [Poetry](https://python-poetry.org/).
+## About the Project
 
-We have given you a head start!
+"You Don't Know Hemmingway" stands at the intersection of literature and technology, offering users a unique platform to inquire about Hemingway's resume. Whether you're curious about his publications, his experiences as a journalist, or his adventures across the globe, this application leverages state-of-the-art technologies to fetch and provide answers:
 
-- The repository defines a Poetry project that declares a few basic dependencies.
-- We included a `bin/dev` script that simplifies the process of starting up your service.
-- We bootstrapped your service by incorporating a [FastAPI](https://fastapi.tiangolo.com/) server and providing a "hello world" endpoint as a starting point.
-- We provided a unit test that exercises the hello world endpoint.
+- **FastAPI**: Powers the backend, ensuring high performance and easy scalability, all with automatic interactive API documentation.
+- **OpenAI**: Utilizes cutting-edge AI models for understanding natural language queries and generating informative, accurate responses.
+- **Qdrant**: Leverages this vector search engine to efficiently organize and retrieve Hemingway's career highlights based on semantic similarity.
+- **Langchain**: Integrates various language AI tools and models, facilitating a seamless interaction between the user's queries and the underlying data processing mechanisms.
 
-## Functional requirements
+## The Journey
 
-Your solution to the challenge must meet the following requirements:
+This project is a testament to Jason Tissera's relentless pursuit of knowledge and excellence. Initiated as a challenge by Sixfold, "You Don't Know Hemmingway" became Jason's arena to dive headfirst into uncharted technological waters. Despite having no prior experience with FastAPI, OpenAI, Qdrant, or Langchain, Jason embraced the learning curve with focus and determination. The result is an application that not only demonstrates his technical prowess but also his capacity to innovate and inspire.
 
-- The service must ingest a PDF document, chunk its text content into pages, create vector embeddings of the pages, and store them in a vector database.
-- The service must provide an API endpoint that takes a question written in natural language as a query parameter and responds with an answer to the question.
-- The service must use [LangChain](https://langchain.com/) to find the three pages of the PDF that are most similar to the question and prompt an LLM to answer the question using only the content from the best-matching pages.
+## Setup Instructions
 
-## Testing requirements
+### Install Dependencies with Poetry
+- **Poetry**: Manages dependencies. Install from [here](https://python-poetry.org/).
+  - Install dependencies: `poetry install`
 
-- You must write at least one unit test and one integration test _in addition_ to the test that was provided.
+### Setup Qdrant with Docker
+- **Qdrant**: Requires Docker. Install Docker [here](https://docs.docker.com/engine/install/).
+  - Start Qdrant: 
+    ```
+    docker run -p 6333:6333 -p 6334:6334 \
+        -v $(pwd)/qdrant_storage:/qdrant/storage:z \
+        qdrant/qdrant
+    ```
 
-## Documentation requirements
+### Configure OpenAI API
+- **OpenAI**: You Don't Know Ernest uses OpenAI's LLM. Obtain an API key [here](https://openai.com/api/).
+  - Set API key: 
+    ```
+    export OPENAI_API_KEY="YOUR_KEY"
+    ```
 
-- You must delete these instructions from this document and fashion it into a proper README for your project, explaining how to set up the project, run the tests, and interact with the service.
-- The README must also describe any known issues with your solution.
+### Start "You don't know Hemmingway"
+    
+- **Start Service**:
+    ```
+    bin/dev
+    ```
 
-## ChatGPT
+- **Ask your question**:
+    Navigate to your service in your browser
+    For example: http://[127.0.0.1:8000]/docs#
 
-We know that it’s super tempting to use ChatGPT for help with coding challenges like this. We’re okay if you do that. This is the distant future, and AIs help us write code all the time!
-
-We just ask that you do a few things:
-
-1. **Just tell us!** We’d love to understand how ChatGPT made this exercise easier for you.
-2. **Share your prompts.** This is an opportunity to show us how amazing you are at prompt engineering!
-3. **Show us a code diff** of the changes you made to whatever came out of the AI. Be transparent about what you did yourself and what was generated for you.
-
-## Submitting your solution
-
-Do your work on a branch. When you’re ready to submit, open a pull request to the `main` branch. It will automatically be assigned to us for review.
-
----
-
-## Setup instructions
-
-### Install project dependencies
-
-```
-poetry install
-# anything else you'd like us to do to get the project running
-```
-
-### Copy and update the .env file
-
-```
-cp .env.example .env
-# anything else you'd like us to do to get the project running
-```
-
-## Running
-To run the service:
-```
-bin/dev
-```
+    For example, you can ask about Hemmingway's resume to understand how the Resume PDF was stored in Qdrant and retrieved.
+    ```
+    On what page of Hemmingway's resume is his professional experience?
+    ```
